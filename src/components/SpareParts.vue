@@ -1,8 +1,14 @@
 <template>
-  <div class="card">
+  <div>
     <h2>Spare Parts</h2>
-    <input v-model="search" placeholder="Search part" class="search-input" />
 
+    <!-- Search -->
+    <input v-model="searchTerm" placeholder="Search parts..." />
+
+    <!-- Add new -->
+    <button @click="showForm(null)">+ Add Part</button>
+
+    <!-- Spare Parts Table -->
     <table>
       <thead>
         <tr>
@@ -10,75 +16,108 @@
           <th>Stock</th>
           <th>Supplier Cost</th>
           <th>Selling Price</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="part in pagedParts" :key="part.id">
+        <tr v-for="part in paginatedParts" :key="part.id">
           <td>{{ part.name }}</td>
           <td>{{ part.stock }}</td>
           <td>${{ part.supplierCost.toFixed(2) }}</td>
           <td>${{ part.sellingPrice.toFixed(2) }}</td>
           <td>
-            <button @click="editPart(part)">Edit</button>
-            <button @click="deletePart(part)">Delete</button>
+            <button @click="showForm(part)">Edit</button>
+            <button @click="deletePart(part.id)">Delete</button>
           </td>
         </tr>
       </tbody>
     </table>
 
+    <!-- Pagination -->
     <div class="pagination">
-      <button :disabled="currentPage === 1" @click="currentPage--">Prev</button>
+      <button :disabled="currentPage === 1" @click="prevPage">Prev</button>
       <span>Page {{ currentPage }} / {{ totalPages }}</span>
-      <button :disabled="currentPage === totalPages" @click="currentPage++">
+      <button :disabled="currentPage === totalPages" @click="nextPage">
         Next
       </button>
     </div>
 
-    <!-- Add/Edit form omitted for brevity -->
+    <!-- Add/Edit Modal -->
+    <SparePartForm
+      v-if="showingForm"
+      :partData="editingPart"
+      @save="savePart"
+      @cancel="showingForm = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
+import SparePartForm from "./SparePartForm.vue";
 
 const props = defineProps({ spareParts: Array });
-const { spareParts } = props;
 
-const search = ref("");
+const searchTerm = ref("");
+const showingForm = ref(false);
+const editingPart = ref(null);
+
+// Pagination
 const currentPage = ref(1);
-const perPage = 10;
+const perPage = ref(5);
 
 const filteredParts = computed(() =>
-  spareParts.filter((p) =>
-    p.name.toLowerCase().includes(search.value.toLowerCase())
+  props.spareParts.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.value.toLowerCase())
   )
 );
 
 const totalPages = computed(() =>
-  Math.ceil(filteredParts.value.length / perPage)
+  Math.ceil(filteredParts.value.length / perPage.value)
 );
-const pagedParts = computed(() => {
-  const start = (currentPage.value - 1) * perPage;
-  return filteredParts.value.slice(start, start + perPage);
-});
 
-// Edit/Delete functions
-function editPart(p) {
-  /* ... */
+const paginatedParts = computed(() =>
+  filteredParts.value.slice(
+    (currentPage.value - 1) * perPage.value,
+    currentPage.value * perPage.value
+  )
+);
+
+function prevPage() {
+  if (currentPage.value > 1) currentPage.value--;
 }
-function deletePart(p) {
-  /* ... */
+function nextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+}
+
+// Add/Edit
+function showForm(part) {
+  editingPart.value = part ? { ...part } : null;
+  showingForm.value = true;
+}
+
+function savePart(newPart) {
+  if (editingPart.value) {
+    // update existing
+    const index = props.spareParts.findIndex((p) => p.id === newPart.id);
+    if (index !== -1) props.spareParts[index] = newPart;
+  } else {
+    // add new
+    newPart.id = Date.now();
+    props.spareParts.push(newPart);
+  }
+  showingForm.value = false;
+}
+
+// Delete
+function deletePart(id) {
+  if (!confirm("Delete this part?")) return;
+  const index = props.spareParts.findIndex((p) => p.id === id);
+  if (index !== -1) props.spareParts.splice(index, 1);
 }
 </script>
 
-<style>
-.card {
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-}
+<style scoped>
 table {
   width: 100%;
   border-collapse: collapse;
@@ -90,19 +129,17 @@ td {
   padding: 5px;
   text-align: left;
 }
-.search-input {
-  margin-bottom: 10px;
+input {
   padding: 5px;
-  width: 200px;
-}
-.pagination {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
 }
 button {
   padding: 5px 10px;
+  margin-right: 5px;
   cursor: pointer;
+}
+.pagination {
+  margin-top: 10px;
 }
 </style>
