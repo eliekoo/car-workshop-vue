@@ -5,7 +5,7 @@ export const cars = Array.from({ length: 50 }, (_, i) => ({
   brand: ["Toyota", "Honda", "Proton", "Nissan"][i % 4],
   model: ["Vios", "Civic", "Saga", "Almera"][i % 4],
   owner: `Owner ${i + 1}`,
-  ic: `9001010${i.toString().padStart(3, "0")}X`,
+  ic: `90010100${i.toString().padStart(3, "0")}X`,
 }));
 
 export const spareParts = Array.from({ length: 50 }, (_, i) => ({
