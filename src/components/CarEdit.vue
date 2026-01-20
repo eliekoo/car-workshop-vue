@@ -88,49 +88,82 @@
     <h3>Repair History</h3>
     <div v-for="(r, index) in carRepairs" :key="index" class="repair-history">
       <p @click="r.showDetails = !r.showDetails" class="toggle-header">
-        {{ r.date }} - Total: ${{ r.totalCost.toFixed(2) }}, Profit: ${{
-          r.profit.toFixed(2)
-        }}
-        <span v-if="!r.showDetails">[Show Details]</span>
-        <span v-else>[Hide Details]</span>
+        {{ r.date }} - Total: ${{ r.totalCost.toFixed(2) }}
+        <span v-if="!r.showDetails"> [Show Details]</span>
+        <span v-else> [Hide Details]</span>
       </p>
       <div v-if="r.showDetails" class="details">
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Part</th>
-                <th>Qty</th>
-                <th>Supplier</th>
-                <th>Price</th>
-                <th>Discount</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="u in r.partsUsedDetails" :key="u.partId">
-                <td>{{ u.name }}</td>
-                <td>{{ u.qty }}</td>
-                <td>${{ u.supplierCost.toFixed(2) }}</td>
-                <td>${{ u.sellingPrice.toFixed(2) }}</td>
-                <td>${{ u.discount.toFixed(2) }}</td>
-                <td>${{ (u.sellingPrice * u.qty - u.discount).toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="receipt" :class="{ 'print-active': printIndex === index }">
+          <h3>Car Workshop Receipt</h3>
+          <p><b>Car Plate: </b> {{ car.plateNo }}</p>
+          <p><b>Date: </b> {{ r.date }}</p>
+          <p><b>Customer: </b> {{ car.owner }}</p>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Part</th>
+                  <th>Qty</th>
+                  <th class="internal-only">Supplier</th>
+                  <th>Unit Price</th>
+                  <th>Discount</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="u in r.partsUsedDetails" :key="u.partId">
+                  <td>{{ u.name }}</td>
+                  <td>{{ u.qty }}</td>
+                  <td class="internal-only">
+                    ${{ u.supplierCost.toFixed(2) }}
+                  </td>
+                  <td>${{ u.sellingPrice.toFixed(2) }}</td>
+                  <td>${{ u.discount.toFixed(2) }}</td>
+                  <td>
+                    ${{ (u.sellingPrice * u.qty - u.discount).toFixed(2) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="summary-box">
+            <table class="summary-table">
+              <tbody>
+                <tr>
+                  <td>Labour</td>
+                  <td class="amount">${{ r.labour.toFixed(2) }}</td>
+                </tr>
+                <tr>
+                  <td>Other Fee</td>
+                  <td class="amount">${{ r.otherFee.toFixed(2) }}</td>
+                </tr>
+                <tr>
+                  <td>Tax</td>
+                  <td class="amount">${{ r.tax.toFixed(2) }}</td>
+                </tr>
+                <tr class="total-row">
+                  <td>Total</td>
+                  <td class="amount">${{ r.totalCost.toFixed(2) }}</td>
+                </tr>
+                <tr class="profit-row internal-only">
+                  <td>Profit</td>
+                  <td class="amount">${{ r.profit.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <p><b>Labour:</b> ${{ r.labour }}</p>
-        <p><b>Other Fee:</b> ${{ r.otherFee }}</p>
-        <p><b>Tax:</b> ${{ r.tax.toFixed(2) }}</p>
-        <p><b>Total:</b> ${{ r.totalCost.toFixed(2) }}</p>
-        <p><b>Profit:</b> ${{ r.profit.toFixed(2) }}</p>
+
+        <button style="margin-top: 20px" @click="printReceipt(index)">
+          Print / Save PDF
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from "vue";
+import { reactive, ref, computed, nextTick } from "vue";
 
 const props = defineProps({ car: Object, spareParts: Array, repairs: Array });
 const { car, spareParts, repairs } = props;
@@ -209,6 +242,20 @@ function addRepair() {
   labourCost.value = 20;
   serviceTaxPercent.value = 6;
   otherFee.value = 0;
+}
+
+const printIndex = ref(null);
+
+function printReceipt(index) {
+  printIndex.value = index;
+
+  nextTick(() => {
+    window.print();
+
+    setTimeout(() => {
+      printIndex.value = null;
+    }, 500);
+  });
 }
 </script>
 
@@ -343,5 +390,69 @@ td {
   border: 1px solid #ccc;
   padding: 5px;
   text-align: left;
+}
+
+.summary-box {
+  max-width: 320px;
+  margin-top: 10px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.summary-table td {
+  padding: 6px 8px;
+}
+
+.summary-table td:first-child {
+  color: #555;
+}
+
+.amount {
+  text-align: right;
+  font-weight: 500;
+}
+
+.total-row td {
+  border-top: 1px solid #ddd;
+  font-weight: bold;
+}
+
+.profit-row td {
+  font-weight: bold;
+  color: #2e7d32;
+}
+</style>
+
+<style>
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .internal-only {
+    display: none !important;
+  }
+
+  .print-active,
+  .print-active * {
+    visibility: visible !important;
+  }
+
+  .print-active {
+    max-width: 800px;
+    margin: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  button {
+    display: none !important;
+  }
 }
 </style>
