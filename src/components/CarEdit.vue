@@ -14,7 +14,7 @@
 
   <!-- Add Repair Section -->
   <div class="card add-repair-card">
-    <h3>Add Repair</h3>
+    <h3>Add Repair Record</h3>
 
     <div class="repair-items">
       <div
@@ -38,7 +38,9 @@
             <label>Select Part:</label>
             <select v-model="item.partId">
               <option v-for="p in item.filtered" :key="p.id" :value="p.id">
-                {{ p.name }} (Stock: {{ p.stock }})
+                {{ p.name }} (Stock: {{ p.stock }}, Price: ${{
+                  p.sellingPrice
+                }})
               </option>
             </select>
           </div>
@@ -49,10 +51,16 @@
           </div>
 
           <div class="form-group">
-            <label>Discount ($):</label>
+            <label>Discount ($): </label>
             <input type="number" v-model.number="item.discount" min="0" />
           </div>
 
+          <div class="form-group cost-preview" v-if="getSelectedPart(item)">
+            <label>Cost:</label>
+            <div class="cost-text">
+              ${{ (getSelectedPart(item).sellingPrice * item.qty).toFixed(2) }}
+            </div>
+          </div>
           <div class="remove-button-group">
             <button class="remove-btn" @click="removeItem(index)">
               Remove
@@ -80,7 +88,7 @@
       </div>
     </div>
 
-    <button class="add-repair-btn" @click="addRepair">Add Repair</button>
+    <button class="add-repair-btn" @click="addRepair">Add Repair Record</button>
   </div>
 
   <!-- Repair History -->
@@ -170,7 +178,9 @@ const { car, spareParts, repairs } = props;
 
 // Reactive repair items
 const repairItems = reactive([]);
-
+function getSelectedPart(item) {
+  return spareParts.find((p) => p.id === item.partId);
+}
 // Add / Remove / Search part
 function addItem() {
   repairItems.push({
@@ -348,9 +358,9 @@ select {
   background: none;
   border-radius: 4px;
 }
-.add-part-btn:hover,
-.add-repair-btn:hover {
-  background: #007bff;
+
+.add-repair-btn {
+  background-color: #007bff;
   color: #fff;
 }
 

@@ -78,7 +78,6 @@ input {
 }
 button {
   padding: 6px 12px;
-  border-radius: 5px;
   cursor: pointer;
 }
 </style>
