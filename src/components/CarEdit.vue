@@ -86,6 +86,22 @@
         <label>Other Fee ($):</label>
         <input type="number" v-model.number="otherFee" min="0" />
       </div>
+
+      <div class="form-group">
+        <label>Remark (Internal Message):</label>
+        <textarea
+          v-model="remark"
+          placeholder="Remark / Internal message will not visible to customer"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Note (Message to Customer):</label>
+        <textarea
+          v-model="note"
+          placeholder="Message will visible to customer"
+        />
+      </div>
     </div>
 
     <button class="add-repair-btn" @click="addRepair">Add Repair Record</button>
@@ -160,6 +176,11 @@
               </tbody>
             </table>
           </div>
+
+          <div class="internal-only">
+            Remark (Internal Message): {{ r.remark }}
+          </div>
+          <div class="">Note (Message to Customer): {{ r.note }}</div>
         </div>
 
         <button style="margin-top: 20px" @click="printReceipt(index)">
@@ -206,6 +227,10 @@ const labourCost = ref(20);
 const serviceTaxPercent = ref(6);
 const otherFee = ref(0);
 
+//Messages
+const note = ref();
+const remark = ref();
+
 // Computed repairs for this car
 const carRepairs = computed(() =>
   repairs.filter((r) => r.carPlate === car.plateNo)
@@ -245,6 +270,8 @@ function addRepair() {
     totalCost,
     profit,
     showDetails: false,
+    note,
+    remark,
   });
 
   // Reset form
@@ -252,6 +279,8 @@ function addRepair() {
   labourCost.value = 20;
   serviceTaxPercent.value = 6;
   otherFee.value = 0;
+  note = "";
+  remark = "";
 }
 
 const printIndex = ref(null);

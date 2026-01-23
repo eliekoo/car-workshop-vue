@@ -38,8 +38,8 @@
     </div>
 
     <div>
-      <label>Delay Cost:</label>
-      <input type="number" v-model.number="delayCost" min="0" />
+      <label>Other Fee:</label>
+      <input type="number" v-model.number="otherFee" min="0" />
     </div>
 
     <button @click="addRepair" style="margin-top: 10px">Add Repair</button>
@@ -53,7 +53,7 @@
           <li>Parts Selling Price: ${{ repair.partsSellingPrice }}</li>
           <li>Labour: ${{ repair.labour }}</li>
           <li>Service Tax: ${{ repair.tax.toFixed(2) }}</li>
-          <li>Delay Cost: ${{ repair.delayCost }}</li>
+          <li>Other Fee: ${{ repair.otherFee }}</li>
           <li>
             <b>Total Cost Charged: ${{ repair.totalCost.toFixed(2) }}</b>
           </li>
@@ -83,7 +83,7 @@ const selectedCar = ref("");
 const partsQty = reactive({});
 const labourCost = ref(20);
 const serviceTaxPercent = ref(6);
-const delayCost = ref(0);
+const otherFee = ref(0);
 
 function addRepair() {
   if (!selectedCar.value) return alert("Select a car!");
@@ -109,7 +109,7 @@ function addRepair() {
 
   const labour = labourCost.value;
   const tax = (partsSellingPrice + labour) * (serviceTaxPercent.value / 100);
-  const totalCost = partsSellingPrice + labour + tax + delayCost.value;
+  const totalCost = partsSellingPrice + labour + tax + otherFee.value;
   const profit = partsSellingPrice + labour - partsSupplierCost;
 
   props.repairs.push({
@@ -120,7 +120,7 @@ function addRepair() {
     partsSellingPrice,
     labour,
     tax,
-    delayCost: delayCost.value,
+    otherFee: otherFee.value,
     totalCost,
     profit,
   });
@@ -128,7 +128,7 @@ function addRepair() {
   // reset
   partsQty = reactive({});
   selectedCar.value = "";
-  delayCost.value = 0;
+  otherFee.value = 0;
 }
 
 // Monthly summary (current month)
